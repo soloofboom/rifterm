@@ -54,7 +54,7 @@ def status() -> None:
         err_console.print("[red]Pas de clé sauvegardée — [bold]rifterm login <clé>[/bold][/red]")
         raise typer.Exit(code=1)
     try:
-        resp = get("/heat-index/daily", api_key=api_key, params={"days": 1, "limit": 1})
+        resp = get("/cli/heat", api_key=api_key, params={"days": 1, "limit": 1})
     except RifApiError as exc:
         err_console.print(f"[red]{exc}[/red]")
         raise typer.Exit(code=1) from exc
