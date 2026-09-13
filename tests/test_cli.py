@@ -41,7 +41,7 @@ def test_status_with_valid_key_shows_quota(tmp_path, monkeypatch):
 
     def fake_get(path, *, api_key=None, params=None, transport=None):
         assert api_key == "rif_abc123"
-        assert path == "/heat-index/daily"
+        assert path == "/cli/heat"
         return httpx.Response(200, json={"success": True}, headers={"X-RateLimit-Remaining": "998"})
 
     monkeypatch.setattr("rifterm.cli.get", fake_get)
