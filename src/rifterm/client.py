@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from datetime import UTC, datetime
 
 import httpx
 
@@ -19,6 +20,23 @@ class RifApiError(Exception):
 def base_url() -> str:
     """URL de base de l'API (override via ``RIFTERM_API_URL``, utile en dev)."""
     return os.environ.get("RIFTERM_API_URL", DEFAULT_BASE_URL).rstrip("/")
+
+
+def rate_reset_local(headers: httpx.Headers) -> str | None:
+    """Heure locale (``HH:MM``) de réinitialisation du quota.
+
+    Calculée depuis ``X-RateLimit-Reset`` — l'epoch de minuit UTC côté
+    serveur. ``None`` si l'en-tête est absent ou illisible.
+    """
+    raw = headers.get("X-RateLimit-Reset")
+    if not raw:
+        return None
+    try:
+        epoch = int(raw)
+    except (TypeError, ValueError):
+        return None
+    reset = datetime.fromtimestamp(epoch, tz=UTC).astimezone()
+    return reset.strftime("%H:%M")
 
 
 def get(
@@ -49,9 +67,19 @@ def get(
             "Clé API invalide ou révoquée — rifterm login <clé> pour enregistrer une nouvelle clé."
         )
     if resp.status_code == 403:
-        raise RifApiError("L'accès API nécessite un abonnement PRO+ — lerif.ca/pricing.")
+        raise RifApiError(
+            "L'accès API nécessite un abonnement PRO+ — abonne-toi sur lerif.ca/rifterm."
+        )
     if resp.status_code == 429:
-        raise RifApiError("Quota quotidien atteint (1000 appels/jour) — reviens demain.")
+        reset = rate_reset_local(resp.headers)
+        if reset:
+            raise RifApiError(
+                "Quota quotidien atteint (1000 appels/jour) — "
+                f"réinitialisation à {reset} heure locale (minuit UTC)."
+            )
+        raise RifApiError(
+            "Quota quotidien atteint (1000 appels/jour) — réinitialisation à minuit UTC."
+        )
     if resp.status_code >= 500:
         raise RifApiError(f"L'API RIF a un souci (HTTP {resp.status_code}) — réessaie plus tard.")
     if resp.status_code != 200:
