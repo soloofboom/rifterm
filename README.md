@@ -19,14 +19,16 @@ pipx install rifterm      # (à venir — publication PyPI prévue)
 rifterm login <clé>    Sauvegarde ta clé API RIF (format rif_…)
 rifterm heat           Heat Index quotidien — score global + tickers
 rifterm pepites        Pépites récentes — ticker, score, heat, signaux
+rifterm report         Agrégat heat + pépites — lecture ou export
 rifterm status         État de ta clé + quota quotidien
 ```
 
-Options utiles (sur `heat` et `pepites`) :
+Options utiles (sur `heat`, `pepites` et `report`) :
 
 - `--days N` — fenêtre en jours (1–30, défaut 1)
 - `--no-cache` — force l'appel API en ignorant le cache local (TTL 5 min)
 - `--json` — sortie JSON brute, sans styles ni emoji (global ou par commande)
+- `--out report.md` / `--out report.json` — export fichier pour `report`
 
 Exemples :
 
@@ -34,7 +36,12 @@ Exemples :
 rifterm heat                 # tableau riche dans le terminal
 rifterm heat --json | jq '.data[0]'
 rifterm pepites --days 3 --json
+rifterm report --days 2 --out report.md
 ```
+
+> `report` n'appelle pas encore un endpoint serveur `/cli/report` : celui-ci
+> n'est pas branché. La commande agrège pour l'instant côté CLI
+> `/cli/heat` + `/cli/pepites`; ça devra évoluer quand l'endpoint existera.
 
 Les données nécessitent une clé API (abonnement PRO+ sur
 [lerif.ca/rifterm](https://lerif.ca/rifterm)). Le CLI lui-même est gratuit et
@@ -69,8 +76,8 @@ Variables d'environnement :
 
 ## Feuille de route
 
-`rifterm report` (agrégat quotidien + export Markdown/JSON) arrive en v0.2 —
-suivi dans l'issue [#3](https://github.com/soloofboom/rifterm/issues/3).
+Un endpoint serveur `/cli/report` reste possible plus tard — suivi dans
+l'issue [#3](https://github.com/soloofboom/rifterm/issues/3).
 
 ## Licence
 

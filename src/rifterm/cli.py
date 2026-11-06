@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import typer
 from rich.console import Console
 
@@ -9,7 +12,7 @@ from rifterm import __version__
 from rifterm.cache import fetch
 from rifterm.client import RifApiError, get
 from rifterm.config import config_path, load_api_key, save_api_key
-from rifterm.render import render_heat, render_pepites
+from rifterm.render import render_heat, render_pepites, report_markdown
 
 app = typer.Typer(help="rifterm — le marché, dans votre terminal.", no_args_is_help=True)
 console = Console()
@@ -46,6 +49,15 @@ def _fetch_or_exit(path: str, api_key: str, params: dict[str, object], use_cache
         err_console.print(f"[red]{exc}[/red]")
         raise typer.Exit(code=1) from exc
     return payload
+
+
+def write_text_or_exit(path: str, content: str) -> None:
+    """Export fichier avec une erreur lisible si le chemin est indisponible."""
+    try:
+        Path(path).write_text(content, encoding="utf-8", newline="\n")
+    except OSError as exc:
+        err_console.print(f"[red]Écriture impossible dans {path} — {exc}[/red]")
+        raise typer.Exit(code=1) from exc
 
 
 @app.callback()
@@ -126,6 +138,74 @@ def pepites(
     api_key = _load_key_or_exit()
     payload = _fetch_or_exit("/cli/pepites", api_key, params={"days": days}, use_cache=not no_cache)
     render_pepites(console, payload, json_mode=_json_mode(ctx, json_local))
+
+
+@app.command()
+def report(
+    ctx: typer.Context,
+    days: int = typer.Option(
+        1, "--days", min=1, max=30, help="Fenêtre en jours (défaut 1, max 30)."
+    ),
+    no_cache: bool = typer.Option(
+        False, "--no-cache", help="Force l'appel API (ignore le cache local de 5 min)."
+    ),
+    out: str | None = typer.Option(
+        None, "--out", help="Fichier d'export (.md ou .json) au lieu de la sortie terminal."
+    ),
+    json_local: bool = typer.Option(False, "--json", help=_JSON_HELP),
+) -> None:
+    """Agrégat heat + pépites, export Markdown/JSON.
+
+    Côté CLI seulement : l'endpoint serveur ``/cli/report`` n'est pas encore
+    branché, donc les données viennent des endpoints ``heat`` et ``pepites``.
+    """
+    suffix = ""
+    if out is not None:
+        suffix = out.rsplit(".", 1)[-1].lower() if "." in out else ""
+        if suffix not in {"json", "md"} or not Path(out).parent.is_dir():
+            err_console.print(
+                "[red]--out attend un dossier existant et le format .md ou .json.[/red]"
+            )
+            raise typer.Exit(code=1)
+
+    api_key = _load_key_or_exit()
+    heat_payload = _fetch_or_exit(
+        "/cli/heat",
+        api_key,
+        params={"days": days},
+        use_cache=not no_cache,
+    )
+    pepites_payload = _fetch_or_exit(
+        "/cli/pepites",
+        api_key,
+        params={"days": days},
+        use_cache=not no_cache,
+    )
+    payload = {
+        "report_version": 1,
+        "days": days,
+        "heat": heat_payload,
+        "pepites": pepites_payload,
+    }
+
+    if out is None:
+        if _json_mode(ctx, json_local):
+            print(json.dumps(payload, ensure_ascii=False))
+        else:
+            console.rule("Rapport rifterm")
+            console.print("[dim]Endpoint serveur /cli/report non branché — agrégat local.[/dim]")
+            render_heat(console, heat_payload, json_mode=False)
+            console.print()
+            render_pepites(console, pepites_payload, json_mode=False)
+        return
+
+    content = (
+        json.dumps(payload, ensure_ascii=False) + "\n"
+        if suffix == "json"
+        else report_markdown(payload)
+    )
+    write_text_or_exit(out, content)
+    console.print(f"[green]✓[/green] Rapport écrit dans [bold]{out}[/bold].")
 
 
 if __name__ == "__main__":

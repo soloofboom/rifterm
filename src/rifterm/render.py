@@ -122,3 +122,72 @@ def render_pepites(console: Console, payload: dict[str, Any], *, json_mode: bool
             str(row.get("date") or "-"),
         )
     console.print(table)
+
+
+def report_markdown(payload: dict[str, Any]) -> str:
+    """Rapport Markdown : agrégat heat + pépites, sans styles ni ANSI.
+
+    Côté CLI pour l'instant : l'endpoint serveur ``/cli/report`` n'est pas
+    encore branché, donc ``heat`` et ``pepites`` restent les sources.
+    """
+    lines = ["# Rapport rifterm", "", f"Période : {payload.get('days', 1)} jour(s)", ""]
+
+    lines += ["## Heat Index", ""]
+    heat = payload.get("heat")
+    score = global_heat(heat if isinstance(heat, dict) else {})
+    lines.append(f"Score global : {score if score is not None else '-'}")
+    heat_rows = _rows(heat if isinstance(heat, dict) else {}, "heat_index")
+    if not heat_rows:
+        lines += ["", "Aucune donnée heat disponible."]
+    else:
+        headers = ["Ticker", "Date", "Heat", "Niveau", "Type", "Conviction", "Signaux"]
+        table_rows = []
+        for row in heat_rows:
+            heat_value = row.get("heat_index")
+            conviction = row.get("conviction_score")
+            table_rows.append(
+                [
+                    str(row.get("ticker") or "?"),
+                    str(row.get("date") or "-"),
+                    f"{float(heat_value):.1f}" if heat_value is not None else "-",
+                    str(row.get("heat_level") or "-"),
+                    str(row.get("market_type") or "-"),
+                    f"{float(conviction):.1f}" if conviction is not None else "-",
+                    _signals(row),
+                ]
+            )
+        lines += ["", _markdown_table(headers, table_rows)]
+
+    lines += ["", "## Pépites", ""]
+    pepites = payload.get("pepites")
+    pepites_rows = _rows(pepites if isinstance(pepites, dict) else {}, "pepite_score")
+    if not pepites_rows:
+        lines.append("Aucune pépite détectée sur la période.")
+    else:
+        headers = ["Ticker", "Score", "Heat", "Signaux", "Date"]
+        table_rows = []
+        for row in pepites_rows:
+            pepite_score = row.get("pepite_score")
+            heat_value = row.get("heat_index")
+            table_rows.append(
+                [
+                    str(row.get("ticker") or "?"),
+                    f"{float(pepite_score):.1f}" if pepite_score is not None else "-",
+                    f"{float(heat_value):.1f}" if heat_value is not None else "-",
+                    _signals(row),
+                    str(row.get("date") or "-"),
+                ]
+            )
+        lines += ["", _markdown_table(headers, table_rows)]
+
+    return "\n".join(lines) + "\n"
+
+
+def _markdown_table(headers: list[str], rows: list[list[str]]) -> str:
+    """Table Markdown compacte ; ``|`` et retours à la ligne restent inoffensifs."""
+    escape = lambda value: str(value).replace("|", "\\|").replace("\n", " ")
+    result = ["| " + " | ".join(map(escape, headers)) + " |"]
+    result.append("| " + " | ".join(["---"] * len(headers)) + " |")
+    for row in rows:
+        result.append("| " + " | ".join(map(escape, row)) + " |")
+    return "\n".join(result)
