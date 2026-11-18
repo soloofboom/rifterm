@@ -5,4 +5,4 @@ directement en ligne de commande. Les données RIF sont servies par
 https://lerif.ca (abonnement PRO+, clé API).
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

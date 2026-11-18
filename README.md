@@ -6,14 +6,13 @@ CLI open source (MIT) de [rif](https://lerif.ca) — Heat Index, pépites et
 données de marché en ligne de commande. Le CLI est gratuit, les données sont
 payantes.
 
-**Statut : v0.1.** Publication PyPI prévue au lancement — en attendant :
-`pip install -e .` depuis le dépôt.
-
-## Utilisation
+**Statut : v0.2.** Disponible sur PyPI :
 
 ```bash
-pipx install rifterm      # (à venir — publication PyPI prévue)
+pipx install rifterm
 ```
+
+## Utilisation
 
 ```text
 rifterm login <clé>    Sauvegarde ta clé API RIF (format rif_…)
