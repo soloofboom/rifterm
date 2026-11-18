@@ -6,7 +6,7 @@ CLI open source (MIT) de [rif](https://lerif.ca) — Heat Index, pépites et
 données de marché en ligne de commande. Le CLI est gratuit, les données sont
 payantes.
 
-**Statut : v0.2.** Disponible sur PyPI :
+**Statut : v0.3.** Disponible sur PyPI :
 
 ```bash
 pipx install rifterm
@@ -20,6 +20,7 @@ rifterm heat           Heat Index quotidien — score global + tickers
 rifterm pepites        Pépites récentes — ticker, score, heat, signaux
 rifterm report         Agrégat heat + pépites — lecture ou export
 rifterm status         État de ta clé + quota quotidien
+rifterm mcp            Serveur MCP (stdio) pour les agents IA
 ```
 
 Options utiles (sur `heat`, `pepites` et `report`) :
@@ -41,6 +42,21 @@ rifterm report --days 2 --out report.md
 > `report` n'appelle pas encore un endpoint serveur `/cli/report` : celui-ci
 > n'est pas branché. La commande agrège pour l'instant côté CLI
 > `/cli/heat` + `/cli/pepites`; ça devra évoluer quand l'endpoint existera.
+
+## Intégration IA (MCP)
+
+`rifterm mcp` démarre un serveur [MCP](https://modelcontextprotocol.io) en
+stdio qui expose `heat`, `pepites` et `report` aux agents compatibles :
+Claude Code/Desktop, Codex, Cursor, Zed, etc.
+
+```bash
+pipx install 'rifterm[mcp]'
+claude mcp add rifterm -- rifterm mcp
+```
+
+Le serveur tourne sur ta machine, lit la même clé que le CLI et réutilise son
+cache. Aucune clé tierce n'est stockée et aucun LLM n'est embarqué : l'agent
+garde son propre modèle et se contente de lire les données RIF.
 
 Les données nécessitent une clé API (abonnement PRO+ sur
 [lerif.ca/rifterm](https://lerif.ca/rifterm)). Le CLI lui-même est gratuit et

@@ -208,5 +208,16 @@ def report(
     console.print(f"[green]✓[/green] Rapport écrit dans [bold]{out}[/bold].")
 
 
+@app.command()
+def mcp() -> None:
+    """Démarre le serveur MCP (stdio) — heat, pepites et report pour les agents IA.
+
+    Nécessite ``pip install 'rifterm[mcp]'``.
+    """
+    from rifterm.mcp_server import main as run_mcp
+
+    run_mcp()
+
+
 if __name__ == "__main__":
     app()

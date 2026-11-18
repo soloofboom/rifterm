@@ -38,6 +38,7 @@ Repository = "https://github.com/soloofboom/rifterm"
 Changelog = "https://github.com/soloofboom/rifterm/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
+mcp = ["mcp>=2.0"]
 dev = [
   "pytest>=8.0",
   "ruff>=0.5",
