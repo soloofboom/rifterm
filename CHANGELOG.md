@@ -4,6 +4,20 @@ Tous les changements notables de rifterm sont documentés ici.
 Format : [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) — versions
 [SemVer](https://semver.org/lang/fr/).
 
+## Non publié
+
+### Sécurité
+
+- La clé API est créée directement en `0600` : plus de fenêtre lisible entre
+  l'écriture du fichier et le `chmod`.
+- `rifterm login --stdin` lit la clé sur l'entrée standard, sans la laisser dans
+  l'historique shell ni dans `ps`.
+- `RIFTERM_API_URL` refuse `http://` hors localhost — la clé ne peut plus partir
+  en clair vers un hôte détourné.
+- Le charset de la clé est validé avant écriture (une clé contenant un guillemet
+  ne peut plus casser le TOML).
+- CI : permissions du workflow limitées à `contents: read`.
+
 ## [0.3.0] — 2026-11-18
 
 ### Ajouté

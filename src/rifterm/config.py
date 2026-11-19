@@ -7,10 +7,15 @@ La clé est écrite dans un TOML minimal sous ``~/.config/rifterm/config.toml``
 from __future__ import annotations
 
 import os
+import re
 import tomllib
 from pathlib import Path
 
 DEFAULT_CONFIG_DIR = Path.home() / ".config" / "rifterm"
+
+# Charset volontairement strict : la clé est interpolée dans du TOML, donc un
+# guillemet ou un retour à la ligne casserait le fichier de config.
+API_KEY_RE = re.compile(r"rif_[A-Za-z0-9_-]+")
 
 
 def config_path() -> Path:
@@ -20,11 +25,19 @@ def config_path() -> Path:
 
 
 def save_api_key(raw_key: str) -> Path:
-    """Écrit la clé dans la config avec permissions 0600. Retourne le chemin."""
+    """Écrit la clé dans la config avec permissions 0600 dès la création."""
+    if not API_KEY_RE.fullmatch(raw_key):
+        raise ValueError(
+            "Clé invalide — format attendu : rif_… (lettres, chiffres, - et _ uniquement)."
+        )
     path = config_path()
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(f'api_key = "{raw_key}"\n', encoding="utf-8")
-    path.chmod(0o600)
+    # O_CREAT + mode 0600 : le fichier n'existe jamais lisible par les autres,
+    # même brièvement (write_text + chmod laissait une fenêtre en 0644).
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as handle:
+        handle.write(f'api_key = "{raw_key}"\n')
+    path.chmod(0o600)  # un fichier préexistant garde sinon ses anciens droits
     return path
 
 

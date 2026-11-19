@@ -29,6 +29,20 @@ def test_get_without_key_sends_no_header(monkeypatch):
     assert resp.status_code == 200
 
 
+def test_base_url_refuse_le_clair_hors_localhost(monkeypatch):
+    monkeypatch.setenv("RIFTERM_API_URL", "http://evil.example")
+
+    with pytest.raises(RifApiError, match="https"):
+        get("/heat", transport=httpx.MockTransport(lambda r: httpx.Response(200)))
+
+
+def test_base_url_accepte_http_sur_localhost(monkeypatch):
+    monkeypatch.setenv("RIFTERM_API_URL", "http://localhost:8000")
+
+    resp = get("/heat", transport=httpx.MockTransport(lambda r: httpx.Response(200)))
+    assert resp.status_code == 200
+
+
 def test_401_raises_invalide(monkeypatch):
     monkeypatch.setenv("RIFTERM_API_URL", "https://test.local")
 

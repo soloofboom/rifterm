@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 import typer
@@ -78,13 +79,26 @@ def main(
 
 @app.command()
 def login(
-    api_key: str = typer.Argument(..., help="Ta clé API RIF (format rif_…)."),
+    api_key: str | None = typer.Argument(None, help="Ta clé API RIF (format rif_…)."),
+    stdin: bool = typer.Option(
+        False,
+        "--stdin",
+        help="Lit la clé sur l'entrée standard — évite de la laisser dans l'historique shell.",
+    ),
 ) -> None:
     """Sauvegarde ta clé API RIF localement (permissions 600)."""
-    if not api_key.startswith("rif_"):
-        err_console.print("[red]Clé invalide — format attendu : rif_…[/red]")
+    key = sys.stdin.readline().strip() if stdin else (api_key or "")
+    if not key:
+        err_console.print(
+            "[red]Clé manquante — [bold]rifterm login <clé>[/bold] "
+            "ou [bold]rifterm login --stdin[/bold][/red]"
+        )
         raise typer.Exit(code=1)
-    path = save_api_key(api_key)
+    try:
+        path = save_api_key(key)
+    except ValueError as exc:
+        err_console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1) from exc
     console.print(f"[green]✓[/green] Clé sauvegardée dans {path} (permissions 600).")
     console.print(f"Teste-la avec [bold]rifterm status[/bold] — config : {config_path()}")
 

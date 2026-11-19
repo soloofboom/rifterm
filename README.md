@@ -23,6 +23,9 @@ rifterm status         État de ta clé + quota quotidien
 rifterm mcp            Serveur MCP (stdio) pour les agents IA
 ```
 
+> `rifterm login --stdin` lit la clé sur l'entrée standard : elle ne reste ni
+> dans l'historique shell ni dans `ps`.
+
 Options utiles (sur `heat`, `pepites` et `report`) :
 
 - `--days N` — fenêtre en jours (1–30, défaut 1)

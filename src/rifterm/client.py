@@ -18,8 +18,19 @@ class RifApiError(Exception):
 
 
 def base_url() -> str:
-    """URL de base de l'API (override via ``RIFTERM_API_URL``, utile en dev)."""
-    return os.environ.get("RIFTERM_API_URL", DEFAULT_BASE_URL).rstrip("/")
+    """URL de base de l'API (override via ``RIFTERM_API_URL``, utile en dev).
+
+    La clé API part vers cette URL : on refuse le clair hors localhost pour
+    qu'un ``RIFTERM_API_URL`` détourné ne puisse pas l'exposer.
+    """
+    url = os.environ.get("RIFTERM_API_URL", DEFAULT_BASE_URL).rstrip("/")
+    if url.startswith(("http://localhost", "http://127.0.0.1", "http://[::1]")):
+        return url
+    if not url.startswith("https://"):
+        raise RifApiError(
+            "RIFTERM_API_URL doit utiliser https:// (http:// n'est accepté que pour localhost)."
+        )
+    return url
 
 
 def rate_reset_local(headers: httpx.Headers) -> str | None:

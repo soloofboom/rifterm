@@ -22,6 +22,20 @@ def test_login_saves_key(tmp_path, monkeypatch):
     assert "rif_abc123" in (tmp_path / "config.toml").read_text()
 
 
+def test_login_stdin_ne_laisse_pas_la_cle_dans_argv(tmp_path, monkeypatch):
+    monkeypatch.setenv("RIFTERM_CONFIG", str(tmp_path / "config.toml"))
+    result = runner.invoke(app, ["login", "--stdin"], input="rif_abc123\n")
+    assert result.exit_code == 0
+    assert "rif_abc123" in (tmp_path / "config.toml").read_text()
+
+
+def test_login_sans_cle_echoue(tmp_path, monkeypatch):
+    monkeypatch.setenv("RIFTERM_CONFIG", str(tmp_path / "config.toml"))
+    result = runner.invoke(app, ["login"])
+    assert result.exit_code == 1
+    assert "Clé manquante" in result.output
+
+
 def test_login_rejects_bad_prefix(tmp_path, monkeypatch):
     monkeypatch.setenv("RIFTERM_CONFIG", str(tmp_path / "config.toml"))
     result = runner.invoke(app, ["login", "not-a-rif-key"])
