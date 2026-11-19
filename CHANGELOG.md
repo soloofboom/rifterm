@@ -4,7 +4,7 @@ Tous les changements notables de rifterm sont documentés ici.
 Format : [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) — versions
 [SemVer](https://semver.org/lang/fr/).
 
-## Non publié
+## [0.3.1] — 2026-11-18
 
 ### Sécurité
 
@@ -55,6 +55,7 @@ depuis l'API RIF.
   pipes, `--days N` (1–30), `--no-cache`.
 - Cache local TTL 5 min par endpoint — économise le quota de 1000 appels/jour.
 
+[0.3.1]: https://github.com/soloofboom/rifterm/releases/tag/v0.3.1
 [0.3.0]: https://github.com/soloofboom/rifterm/releases/tag/v0.3.0
 [0.2.0]: https://github.com/soloofboom/rifterm/releases/tag/v0.2.0
 [0.1.0]: https://github.com/soloofboom/rifterm/releases/tag/v0.1.0
